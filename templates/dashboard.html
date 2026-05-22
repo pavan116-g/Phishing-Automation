@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phish SIEM - Phishing Email Monitoring</title>
+    
+    <!-- Premium Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --border-color: #30363d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --text-white: #ffffff;
+            
+            --primary: #58a6ff;
+            --phish-color: #ff4444;
+            --phish-bg: rgba(255, 68, 68, 0.1);
+            --phish-border: rgba(255, 68, 68, 0.3);
+            
+            --safe-color: #00cc66;
+            --safe-bg: rgba(0, 204, 102, 0.1);
+            --safe-border: rgba(0, 204, 102, 0.3);
+            
+            --unknown-color: #8b949e;
+            --unknown-bg: rgba(139, 148, 158, 0.1);
+            --unknown-border: rgba(139, 148, 158, 0.3);
+            
+            --transition: all 0.2s ease-in-out;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 2.5rem 2rem;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Header section */
+        header {
+            margin-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1.5rem;
+        }
+
+        header h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: var(--text-white);
+            letter-spacing: -0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        header p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.75rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            transition: var(--transition);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: #8b949e;
+        }
+
+        .stat-number {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.75rem;
+            font-weight: 700;
+            color: var(--text-white);
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Card accents */
+        .stat-card.phishing-card {
+            border-left: 5px solid var(--phish-color);
+        }
+        .stat-card.phishing-card .stat-number {
+            color: var(--phish-color);
+        }
+
+        .stat-card.safe-card {
+            border-left: 5px solid var(--safe-color);
+        }
+        .stat-card.safe-card .stat-number {
+            color: var(--safe-color);
+        }
+
+        /* Search input styling */
+        .search-row {
+            margin-bottom: 1.25rem;
+            display: flex;
+        }
+
+        .search-input {
+            width: 100%;
+            max-width: 400px;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: inherit;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .search-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+        }
+
+        /* Table section */
+        .table-container {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            margin-bottom: 2.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background-color: #1f242c;
+            padding: 1rem 1.25rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 1.1rem 1.25rem;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+            word-break: break-word;
+        }
+
+        tr {
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        tr:hover td {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Phishing Row specification */
+        tr.phishing-row {
+            background-color: rgba(255, 68, 68, 0.05);
+        }
+        tr.phishing-row td:first-child {
+            border-left: 4px solid var(--phish-color);
+        }
+        tr.phishing-row:hover td {
+            background-color: rgba(255, 68, 68, 0.08) !important;
+        }
+
+        /* Verdict Badge styling */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-phishing {
+            background-color: var(--phish-bg);
+            color: var(--phish-color);
+            border: 1px solid var(--phish-border);
+        }
+
+        .badge-safe {
+            background-color: var(--safe-bg);
+            color: var(--safe-color);
+            border: 1px solid var(--safe-border);
+        }
+
+        .badge-unknown {
+            background-color: var(--unknown-bg);
+            color: var(--unknown-color);
+            border: 1px solid var(--unknown-border);
+        }
+
+        .reason-cell {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            max-width: 320px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Modal styling */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(13, 17, 23, 0.85);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: var(--transition);
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            width: 90%;
+            max-width: 720px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            transform: translateY(20px);
+            transition: var(--transition);
+            overflow: hidden;
+        }
+
+        .modal-overlay.active .modal-card {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            background-color: #1f242c;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-white);
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1.5rem;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .modal-close:hover {
+            color: var(--text-white);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            max-height: 520px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .modal-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .field-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .field-value {
+            font-size: 0.95rem;
+            background-color: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+        }
+
+        .field-value.body-text {
+            font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            background-color: #0d1117;
+            max-height: 240px;
+            overflow-y: auto;
+        }
+
+        /* Responsive styling */
+        @media (max-width: 768px) {
+            body {
+                padding: 1.5rem 1rem;
+            }
+            .stats-row {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            header h1 {
+                font-size: 1.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Jinja2 namespace counters for robust initial server-side load -->
+        {% set total_count = emails | length %}
+        {% set phishing_count = namespace(value=0) %}
+        {% set safe_count = namespace(value=0) %}
+        {% for email in emails %}
+            {% if email.verdict == 'PHISHING' %}
+                {% set phishing_count.value = phishing_count.value + 1 %}
+            {% elif email.verdict == 'SAFE' %}
+                {% set safe_count.value = safe_count.value + 1 %}
+            {% endif %}
+        {% endfor %}
+        {% set last_checked_val = emails[0].analyzed_at if emails else 'N/A' %}
+
+        <!-- Header -->
+        <header>
+            <h1>Phish SIEM</h1>
+            <p>Last checked: <span id="last-checked-time">{{ last_checked_val }}</span></p>
+        </header>
+
+        <!-- Stats Row -->
+        <div class="stats-row">
+            <!-- Total Emails Card -->
+            <div class="stat-card">
+                <div class="stat-number" id="total-count">{{ total_count }}</div>
+                <div class="stat-label">Total Emails</div>
+            </div>
+
+            <!-- Phishing Detected Card -->
+            <div class="stat-card phishing-card">
+                <div class="stat-number" id="phishing-count">{{ phishing_count.value }}</div>
+                <div class="stat-label">Phishing Detected</div>
+            </div>
+
+            <!-- Safe Emails Card -->
+            <div class="stat-card safe-card">
+                <div class="stat-number" id="safe-count">{{ safe_count.value }}</div>
+                <div class="stat-label">Safe Emails</div>
+            </div>
+        </div>
+
+        <!-- Filter Search Bar -->
+        <div class="search-row">
+            <input type="text" id="search-input" class="search-input" placeholder="Filter emails...">
+        </div>
+
+        <!-- Table Card -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Sender</th>
+                        <th>Subject</th>
+                        <th>Verdict</th>
+                        <th>Confidence</th>
+                        <th>Reason</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    {% if emails %}
+                        {% for email in emails %}
+                            {% set is_phish = email.verdict == 'PHISHING' %}
+                            <tr class="{% if is_phish %}phishing-row{% endif %}" onclick="showDetails({{ email | tojson | forceescape }})">
+                                <td>{{ email.analyzed_at }}</td>
+                                <td>{{ email.sender }}</td>
+                                <td>{{ email.subject }}</td>
+                                <td>
+                                    <span class="badge {% if email.verdict == 'PHISHING' %}badge-phishing{% elif email.verdict == 'SAFE' %}badge-safe{% else %}badge-unknown{% endif %}">
+                                        {{ email.verdict }}
+                                    </span>
+                                </td>
+                                <td>{{ (email.confidence * 100) | int }}%</td>
+                                <td class="reason-cell">{{ email.reason }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr id="no-data-row">
+                            <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                                No emails analyzed yet.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Inspector Modal -->
+    <div class="modal-overlay" id="details-modal" onclick="closeDetailsModal(event)">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-title">Email Analysis Details</div>
+                <button class="modal-close" onclick="closeDetailsModal(null)">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-field">
+                    <span class="field-label">Sender</span>
+                    <div id="modal-sender" class="field-value"></div>
+                </div>
+                
+                <div class="modal-field">
+                    <span class="field-label">Subject</span>
+                    <div id="modal-subject" class="field-value"></div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="modal-field">
+                        <span class="field-label">Verdict Assessment</span>
+                        <div id="modal-verdict" class="field-value" style="font-weight: 700;"></div>
+                    </div>
+                    <div class="modal-field">
+                        <span class="field-label">Confidence</span>
+                        <div id="modal-confidence" class="field-value"></div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="modal-field">
+                        <span class="field-label">Received Date</span>
+                        <div id="modal-received" class="field-value"></div>
+                    </div>
+                    <div class="modal-field">
+                        <span class="field-label">Analyzed Date</span>
+                        <div id="modal-analyzed" class="field-value"></div>
+                    </div>
+                </div>
+
+                <div class="modal-field">
+                    <span class="field-label">Analysis Reason</span>
+                    <div id="modal-reason" class="field-value"></div>
+                </div>
+
+                <div class="modal-field">
+                    <span class="field-label">Email Body (Plain Text)</span>
+                    <div id="modal-body" class="field-value body-text"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS Logic -->
+    <script>
+        // Open/Close modal functions
+        function showDetails(emailObj) {
+            document.getElementById('modal-sender').textContent = emailObj.sender || '(None)';
+            document.getElementById('modal-subject').textContent = emailObj.subject || '(No Subject)';
+            
+            const verdictBadge = document.getElementById('modal-verdict');
+            const verdictLower = (emailObj.verdict || 'UNKNOWN').toLowerCase();
+            let badgeClass = 'badge-unknown';
+            if (emailObj.verdict === 'PHISHING') {
+                badgeClass = 'badge-phishing';
+            } else if (emailObj.verdict === 'SAFE') {
+                badgeClass = 'badge-safe';
+            }
+            
+            verdictBadge.innerHTML = `<span class="badge ${badgeClass}">${emailObj.verdict}</span>`;
+            document.getElementById('modal-confidence').textContent = Math.round(emailObj.confidence * 100) + '%';
+            document.getElementById('modal-received').textContent = formatDateTime(emailObj.received_at);
+            document.getElementById('modal-analyzed').textContent = formatDateTime(emailObj.analyzed_at);
+            document.getElementById('modal-reason').textContent = emailObj.reason || 'No detailed reason provided.';
+            document.getElementById('modal-body').textContent = emailObj.body || '(Empty body)';
+            
+            document.getElementById('details-modal').classList.add('active');
+        }
+
+        function closeDetailsModal(event) {
+            document.getElementById('details-modal').classList.remove('active');
+        }
+
+        // Format DateTime string nicely
+        function formatDateTime(isoString) {
+            if (!isoString || isoString === 'N/A') return 'N/A';
+            try {
+                const date = new Date(isoString);
+                if (isNaN(date.getTime())) return isoString;
+                return date.toLocaleString();
+            } catch (e) {
+                return isoString;
+            }
+        }
+
+        // Format initial server-rendered dates on load
+        document.addEventListener('DOMContentLoaded', () => {
+            const timeEl = document.getElementById('last-checked-time');
+            if (timeEl) {
+                timeEl.textContent = formatDateTime(timeEl.textContent.trim());
+            }
+
+            const rows = document.querySelectorAll('#table-body tr[onclick]');
+            rows.forEach(row => {
+                const timeCell = row.cells[0];
+                if (timeCell) {
+                    timeCell.textContent = formatDateTime(timeCell.textContent.trim());
+                }
+            });
+        });
+
+        // Search filtering implementation
+        const searchInput = document.getElementById('search-input');
+        searchInput.addEventListener('input', () => {
+            const filterValue = searchInput.value.toLowerCase();
+            const rows = document.querySelectorAll('#table-body tr[onclick]');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                const jsonAttr = row.getAttribute('onclick');
+                let matches = text.includes(filterValue);
+                if (!matches && jsonAttr) {
+                    matches = jsonAttr.toLowerCase().includes(filterValue);
+                }
+                
+                row.style.display = matches ? '' : 'none';
+            });
+        });
+
+        // HTML escape helper
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // Auto-refresh every 15 seconds
+        setInterval(async () => {
+            try {
+                // 1. Fetch stats
+                const statsRes = await fetch('/api/stats');
+                if (statsRes.ok) {
+                    const stats = await statsRes.json();
+                    document.getElementById('total-count').textContent = stats.total;
+                    document.getElementById('phishing-count').textContent = stats.phishing;
+                    document.getElementById('safe-count').textContent = stats.safe;
+                    document.getElementById('last-checked-time').textContent = formatDateTime(stats.last_checked);
+                }
+
+                // 2. Fetch email entries
+                const emailsRes = await fetch('/api/emails');
+                if (emailsRes.ok) {
+                    const emails = await emailsRes.json();
+                    const tbody = document.getElementById('table-body');
+                    
+                    if (emails.length === 0) {
+                        tbody.innerHTML = `
+                            <tr id="no-data-row">
+                                <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                                    No emails analyzed yet.
+                                </td>
+                            </tr>
+                        `;
+                        return;
+                    }
+
+                    let rowsHtml = '';
+                    emails.forEach(email => {
+                        const isPhishing = email.verdict === 'PHISHING';
+                        const rowClass = isPhishing ? 'phishing-row' : '';
+                        
+                        let badgeClass = 'badge-unknown';
+                        if (email.verdict === 'PHISHING') {
+                            badgeClass = 'badge-phishing';
+                        } else if (email.verdict === 'SAFE') {
+                            badgeClass = 'badge-safe';
+                        }
+
+                        const confidencePercent = Math.round(email.confidence * 100);
+                        const emailDataStr = JSON.stringify(email).replace(/"/g, '&quot;');
+
+                        rowsHtml += `
+                            <tr class="${rowClass}" onclick="showDetails(${emailDataStr})">
+                                <td>${formatDateTime(email.analyzed_at)}</td>
+                                <td>${escapeHTML(email.sender)}</td>
+                                <td>${escapeHTML(email.subject)}</td>
+                                <td><span class="badge ${badgeClass}">${email.verdict}</span></td>
+                                <td>${confidencePercent}%</td>
+                                <td class="reason-cell">${escapeHTML(email.reason)}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    tbody.innerHTML = rowsHtml;
+                    
+                    // Re-apply search filter after table update
+                    const filterValue = searchInput.value.toLowerCase();
+                    if (filterValue) {
+                        const rows = document.querySelectorAll('#table-body tr[onclick]');
+                        rows.forEach(row => {
+                            const text = row.textContent.toLowerCase();
+                            const jsonAttr = row.getAttribute('onclick');
+                            let matches = text.includes(filterValue);
+                            if (!matches && jsonAttr) {
+                                matches = jsonAttr.toLowerCase().includes(filterValue);
+                            }
+                            row.style.display = matches ? '' : 'none';
+                        });
+                    }
+                }
+            } catch (err) {
+                console.error("Auto-refresh error:", err);
+            }
+        }, 15000);
+    </script>
+</body>
+</html>

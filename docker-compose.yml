@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+    env_file:
+      - .env
+    environment:
+      - DB_PATH=/data/phish_siem.db
+    volumes:
+      - sqlite_data:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    env_file:
+      - .env
+    environment:
+      - DB_PATH=/data/phish_siem.db
+    ports:
+      - "5000:5000"
+    depends_on:
+      - agent
+    volumes:
+      - sqlite_data:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+volumes:
+  sqlite_data:

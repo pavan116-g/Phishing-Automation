@@ -1,0 +1,19 @@
+# Environment / Credentials
+.env
+
+# SQLite Database files
+*.db
+*.db-journal
+
+# Python cache / builds
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Local configuration / IDE files
+.vscode/
+.idea/
+.gemini/
+.system_generated/
+*.log
