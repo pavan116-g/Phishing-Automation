@@ -17,3 +17,5 @@ __pycache__/
 .gemini/
 .system_generated/
 *.log
+venv/
+.env.save
