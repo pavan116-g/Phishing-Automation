@@ -434,7 +434,8 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Time</th>
+                        <th>Received</th>
+                        <th>Analyzed</th>
                         <th>Sender</th>
                         <th>Subject</th>
                         <th>Verdict</th>
@@ -446,8 +447,9 @@
                     {% if emails %}
                         {% for email in emails %}
                             {% set is_phish = email.verdict == 'PHISHING' %}
-                            <tr class="{% if is_phish %}phishing-row{% endif %}" onclick="showDetails({{ email | tojson | forceescape }})">
-                                <td>{{ email.analyzed_at }}</td>
+                            <tr class="{% if is_phish %}phishing-row{% endif %}" data-email="{{ email | tojson | forceescape }}" onclick="showDetails(JSON.parse(this.getAttribute('data-email')))">
+                                <td class="time-cell">{{ email.received_at }}</td>
+                                <td class="time-cell">{{ email.analyzed_at }}</td>
                                 <td>{{ email.sender }}</td>
                                 <td>{{ email.subject }}</td>
                                 <td>
@@ -461,7 +463,7 @@
                         {% endfor %}
                     {% else %}
                         <tr id="no-data-row">
-                            <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                            <td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
                                 No emails analyzed yet.
                             </td>
                         </tr>
@@ -575,9 +577,13 @@
 
             const rows = document.querySelectorAll('#table-body tr[onclick]');
             rows.forEach(row => {
-                const timeCell = row.cells[0];
-                if (timeCell) {
-                    timeCell.textContent = formatDateTime(timeCell.textContent.trim());
+                const receivedCell = row.cells[0];
+                if (receivedCell) {
+                    receivedCell.textContent = formatDateTime(receivedCell.textContent.trim());
+                }
+                const analyzedCell = row.cells[1];
+                if (analyzedCell) {
+                    analyzedCell.textContent = formatDateTime(analyzedCell.textContent.trim());
                 }
             });
         });
@@ -633,7 +639,7 @@
                     if (emails.length === 0) {
                         tbody.innerHTML = `
                             <tr id="no-data-row">
-                                <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                                <td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
                                     No emails analyzed yet.
                                 </td>
                             </tr>
@@ -658,6 +664,7 @@
 
                         rowsHtml += `
                             <tr class="${rowClass}" onclick="showDetails(${emailDataStr})">
+                                <td>${formatDateTime(email.received_at)}</td>
                                 <td>${formatDateTime(email.analyzed_at)}</td>
                                 <td>${escapeHTML(email.sender)}</td>
                                 <td>${escapeHTML(email.subject)}</td>
