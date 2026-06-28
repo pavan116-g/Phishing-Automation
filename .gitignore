@@ -19,3 +19,10 @@ __pycache__/
 *.log
 venv/
 .env.save
+
+# Large binaries & model weights
+*.gguf
+
+# Local DB / Vector Database
+chroma_db/
+

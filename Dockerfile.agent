@@ -1,17 +1,29 @@
 FROM python:3.11-slim
+
 ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
+
+# Install system dependencies needed for torch
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Pre-download the ML model at build time so container starts fast
+RUN python -c "\
+from transformers import AutoTokenizer, AutoModelForSequenceClassification; \
+AutoTokenizer.from_pretrained('cybersectony/phishing-email-detection-distilbert_v2.4.1'); \
+AutoModelForSequenceClassification.from_pretrained('cybersectony/phishing-email-detection-distilbert_v2.4.1'); \
+print('Model cached successfully')"
+
 # Copy all Python files
 COPY *.py ./
 COPY knowledge_base/ ./knowledge_base/
-
 COPY .env .env
 
 CMD ["python", "agent.py"]
-

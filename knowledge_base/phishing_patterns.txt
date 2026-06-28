@@ -1,0 +1,20 @@
+urgency language demanding immediate action
+requests for username and password via email
+mismatched display name and actual email address
+link URLs that do not match the organization they claim to represent
+generic greetings like "Dear Customer" or "Dear User" instead of personal name
+spelling errors and poor grammar throughout the email
+unexpected attachments, especially with extensions like .zip, .exe, or .scr
+requests to verify personal information to prevent account suspension
+threats of legal action or account termination if actions are not taken immediately
+notifications of winning a lottery, contest, or prize that the user never entered
+fake invoices or receipts for purchases the user did not make
+domain names with subtle misspellings (typosquatting) of legitimate brands
+links pointing to IP addresses instead of hostname domains
+request for sensitive banking information, PINs, or CVV codes
+emails claiming to be from government agencies demanding payment or tax details
+login prompts hosted on free or public hosting services like Blogspot or Firebase
+messages claiming unusual login activity with a link to resolve it immediately
+requests to transfer money or purchase gift cards for a supervisor or executive
+emails requesting signature or approval on unexpected shared documents (e.g. DocuSign, PDF)
+hidden links where the display text says one thing but the actual href redirects elsewhere

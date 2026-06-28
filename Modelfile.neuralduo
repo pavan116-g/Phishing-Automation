@@ -1,0 +1,3 @@
+FROM ./neuralduo-phishing.gguf
+PARAMETER temperature 0
+PARAMETER top_p 0.9
