@@ -264,24 +264,11 @@ def analyze_email(
     raw_headers: dict | None = None,
 ) -> Tuple[str, float, str]:
     raw_headers = raw_headers or {}
+    domain      = _extract_domain(sender)
 
-    # Layer 1: Dynamic display-name spoof
-    is_spoof, brand_word, spoof_reason = _dynamic_display_name_spoof(sender)
-    if is_spoof:
-        return "PHISHING", 0.97, spoof_reason
-
-    # Layer 2: Lookalike / typosquat domain
-    domain = _extract_domain(sender)
-    is_look, look_brand, look_score = _is_lookalike(domain)
-    if is_look:
-        return (
-            "PHISHING", 0.95,
-            f"Sending domain '{domain}' closely resembles '{look_brand}' "
-            f"(similarity {look_score:.0%}) but is not a verified "
-            f"{look_brand} domain. Likely a typosquat / lookalike attack."
-        )
-
-    # Layer 3: SPF + DKIM authentication
+    # ── Layer 3 FIRST: SPF + DKIM cryptographic check ────────────────────────
+    # If the email is cryptographically verified, trust it immediately.
+    # No heuristic (display-name, typosquat) overrides a valid DKIM+SPF signature.
     auth    = _parse_auth_headers(raw_headers)
     body_ml = body
 
@@ -310,6 +297,22 @@ def analyze_email(
             body_ml = f"[SPF pass, DKIM fail — possible content tampering] {body}"
         elif spf_fail and dkim_pass:
             body_ml = f"[SPF fail, DKIM pass — unauthorized relay possible] {body}"
+
+    # ── Layer 1: Dynamic display-name spoof ───────────────────────────────────
+    # Only runs if auth was absent or mixed — heuristics as fallback only.
+    is_spoof, brand_word, spoof_reason = _dynamic_display_name_spoof(sender)
+    if is_spoof:
+        return "PHISHING", 0.97, spoof_reason
+
+    # ── Layer 2: Lookalike / typosquat domain ─────────────────────────────────
+    is_look, look_brand, look_score = _is_lookalike(domain)
+    if is_look:
+        return (
+            "PHISHING", 0.95,
+            f"Sending domain '{domain}' closely resembles '{look_brand}' "
+            f"(similarity {look_score:.0%}) but is not a verified "
+            f"{look_brand} domain. Likely a typosquat / lookalike attack."
+        )
 
     # Layer 4: DistilBERT ML classifier
     verdict, confidence, raw_label = _ml_classify(sender, subject, body_ml)
